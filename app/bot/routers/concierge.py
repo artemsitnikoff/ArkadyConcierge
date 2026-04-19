@@ -15,6 +15,7 @@ from aiogram import Bot, F, Router
 from aiogram.exceptions import TelegramAPIError
 from aiogram.types import BufferedInputFile, Message
 
+from app.bot.breakdown_format import format_breakdown
 from app.config import settings
 from app.services.concierge_service import (
     BreakdownAIError,
@@ -154,12 +155,13 @@ async def _run_breakdown(
         return
 
     pretty = json.dumps(result.data, ensure_ascii=False, indent=2)
+    human = format_breakdown(result.data, max_chars=_TELEGRAM_SAFE_LIMIT)
 
     await message.answer_document(
         BufferedInputFile(pretty.encode("utf-8"), filename="breakdown.json"),
         caption="📦 Разбор для CRM",
     )
-    await message.answer(f"<pre>{_escape_preview(pretty)}</pre>")
+    await message.answer(human)
 
     if wait:
         try:
