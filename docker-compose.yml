@@ -1,0 +1,12 @@
+services:
+  concierge:
+    build: .
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./prompts:/app/prompts
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
