@@ -161,8 +161,8 @@ async def _run_breakdown(
         BufferedInputFile(pretty.encode("utf-8"), filename="breakdown.json"),
         caption="📦 Разбор для CRM",
     )
-    await message.answer(human)
     await message.answer(f"<pre>{_escape_preview(pretty)}</pre>")
+    await message.answer(human)
 
     if wait:
         try:
