@@ -105,7 +105,7 @@ async def handle_voice(
     await wait.edit_text(
         f"✅ Расшифровка (спикеров: {result.speakers_count}):\n\n"
         f"<code>{_escape_preview(result.full_text)}</code>\n\n"
-        "🧩 Разбираю задачу...",
+        "🧩 Разбираю на задачи...",
     )
     await _run_breakdown(message, result.full_text, service=concierge_service)
 
@@ -123,7 +123,7 @@ async def handle_text(
             "Не знаю такую команду. Пришли задачу текстом или голосовым, или /help."
         )
         return
-    wait = await message.reply("🧩 Разбираю задачу...")
+    wait = await message.reply("🧩 Разбираю на задачи...")
     await _run_breakdown(message, text, service=concierge_service, wait=wait)
 
 
@@ -157,7 +157,7 @@ async def _run_breakdown(
 
     await message.answer_document(
         BufferedInputFile(pretty.encode("utf-8"), filename="breakdown.json"),
-        caption="📦 JSON-разбор задачи",
+        caption="📦 Разбор для CRM",
     )
     await message.answer(f"<pre>{_escape_preview(pretty)}</pre>")
 
