@@ -162,6 +162,7 @@ async def _run_breakdown(
         caption="📦 Разбор для CRM",
     )
     await message.answer(human)
+    await message.answer(f"<pre>{_escape_preview(pretty)}</pre>")
 
     if wait:
         try:
