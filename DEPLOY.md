@@ -38,24 +38,31 @@ nano .env
 - `MAX_VOICE_DURATION_SEC` — лимит длины голосового (по умолчанию 600).
 - `LOG_FORMAT=json` для продакшна (агрегаторы логов).
 
-### 3. Перенести Claude-токены с Mac
+### 3. Настроить Claude-токены
 
-Самый надёжный вариант — скопировать уже инициализированный файл с локальной машины, где вы залогинены в Claude CLI:
+Anthropic OAuth refresh-токены **одноразовые**: после каждого обновления старый refresh-токен сразу перестаёт работать. Это значит, что **два бота с отдельными копиями `.claude_token.json`, использующих одну учётку Claude, будут обезвреживать токены друг у друга** при каждом refresh.
 
-```bash
-# На Mac
-scp data/.claude_token.json user@server:~/ArkadyConcierge/data/
+**Если на этом же сервере уже есть ArkadyJarvis** — просто шарь между ботами один каталог `data/`. Это уже прописано в `docker-compose.yml`:
+
+```yaml
+volumes:
+  - ../ArkadyJarvis/data:/app/data
 ```
 
-> Эти же токены работают во всех соседних ботах (`ArkadyJarvis` и т. д.) — они от одной учётки Claude.
+То есть Concierge не держит свой `.claude_token.json` — читает файл Jarvis, Jarvis его и обновляет. Свой локальный `data/` у Concierge можно удалить (или оставить пустым, он не используется).
 
-Альтернатива — положить значения прямо в `.env` (`CLAUDE_CODE_OAUTH_TOKEN` + `CLAUDE_REFRESH_TOKEN`). На первом старте `init_token_file` создаст `data/.claude_token.json` сам.
+**Если Jarvis-а на сервере нет** — инициализируй токен-файл с нуля:
 
-На сервере убедиться, что папка существует:
+1. Положи в `.env` значения из переменных `CLAUDE_CODE_OAUTH_TOKEN` и `CLAUDE_REFRESH_TOKEN` (возьми с Mac, где вы залогинены в Claude CLI).
+2. Верни volume к локальной папке в `docker-compose.yml`:
+   ```yaml
+   volumes:
+     - ./data:/app/data
+   ```
+3. Создай папку: `mkdir -p data`.
+4. На первом старте `init_token_file` создаст `data/.claude_token.json` из `.env`.
 
-```bash
-mkdir -p data
-```
+**Если Jarvis на другом сервере/машине** — нужна отдельная Claude-подписка для Concierge. Две копии одной учётки на двух хостах будут мешать друг другу.
 
 ### 4. Запустить
 
