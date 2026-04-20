@@ -6,12 +6,11 @@ services:
     env_file:
       - .env
     volumes:
-      # Share the Claude OAuth token file with ArkadyJarvis on the same host.
-      # Anthropic refresh tokens are single-use — two bots with separate
-      # copies of the file invalidate each other's tokens. Pointing both
-      # containers at the same host dir (`~/ArkadyJarvis/data`) lets them
-      # read/write one source of truth.
-      - ../ArkadyJarvis/data:/app/data
+      # ./data can be a symlink to a shared token dir (e.g. Jarvis's) —
+      # Docker follows symlinks on the host side before mounting, so
+      # pointing ./data at `/var/www/ArkadyJarvis/data` shares the
+      # single-use OAuth refresh chain across both bots.
+      - ./data:/app/data
       - ./prompts:/app/prompts
       - ./.env:/app/.env:ro
     restart: unless-stopped

@@ -42,25 +42,22 @@ nano .env
 
 Anthropic OAuth refresh-токены **одноразовые**: после каждого обновления старый refresh-токен сразу перестаёт работать. Это значит, что **два бота с отдельными копиями `.claude_token.json`, использующих одну учётку Claude, будут обезвреживать токены друг у друга** при каждом refresh.
 
-**Если на этом же сервере уже есть ArkadyJarvis** — просто шарь между ботами один каталог `data/`. Это уже прописано в `docker-compose.yml`:
+**Если на этом же сервере уже есть ArkadyJarvis** — шарь между ботами один каталог `data/` через symlink. Docker следует по symlink-у на стороне хоста, поэтому compose остаётся с `./data:/app/data`, а `./data` просто указывает на Jarvis-каталог:
 
-```yaml
-volumes:
-  - ../ArkadyJarvis/data:/app/data
+```bash
+cd /var/www/ArkadyConcierge
+rm -rf data
+ln -s /var/www/ArkadyJarvis/data data
+ls -la data   # должно быть: data -> /var/www/ArkadyJarvis/data
 ```
 
-То есть Concierge не держит свой `.claude_token.json` — читает файл Jarvis, Jarvis его и обновляет. Свой локальный `data/` у Concierge можно удалить (или оставить пустым, он не используется).
+Теперь Concierge не держит свой `.claude_token.json` — читает файл Jarvis, Jarvis его и обновляет.
 
 **Если Jarvis-а на сервере нет** — инициализируй токен-файл с нуля:
 
-1. Положи в `.env` значения из переменных `CLAUDE_CODE_OAUTH_TOKEN` и `CLAUDE_REFRESH_TOKEN` (возьми с Mac, где вы залогинены в Claude CLI).
-2. Верни volume к локальной папке в `docker-compose.yml`:
-   ```yaml
-   volumes:
-     - ./data:/app/data
-   ```
-3. Создай папку: `mkdir -p data`.
-4. На первом старте `init_token_file` создаст `data/.claude_token.json` из `.env`.
+1. Положи в `.env` значения `CLAUDE_CODE_OAUTH_TOKEN` и `CLAUDE_REFRESH_TOKEN` (возьми с Mac, где вы залогинены в Claude CLI).
+2. Создай папку: `mkdir -p data`.
+3. На первом старте `init_token_file` создаст `data/.claude_token.json` из `.env`.
 
 **Если Jarvis на другом сервере/машине** — нужна отдельная Claude-подписка для Concierge. Две копии одной учётки на двух хостах будут мешать друг другу.
 
