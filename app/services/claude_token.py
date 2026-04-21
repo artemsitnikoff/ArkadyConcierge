@@ -24,21 +24,17 @@ REFRESH_BUFFER_MS = 600_000  # refresh 10 min before expiry
 
 _refresh_lock = asyncio.Lock()
 
-# In-memory cache of the token file. Reads are cheap (<1 ms) but happen on
-# every Claude CLI call — keeping state in process saves the syscall and
-# avoids racing with external token rotation (we own the file).
-_cache: dict[str, Any] = {}
-
 
 def _load() -> dict[str, Any]:
-    if _cache:
-        return _cache
+    # Always re-read: the file is shared with ArkadyJarvis via symlink, so a
+    # sibling process may have rotated the single-use refresh_token since our
+    # last read. An in-process cache would pin us to a stale, already-consumed
+    # token and wedge us at 401 until restart.
     if TOKEN_FILE.exists():
         try:
             data = json.loads(TOKEN_FILE.read_text())
             if isinstance(data, dict):
-                _cache.update(data)
-                return _cache
+                return data
         except (json.JSONDecodeError, OSError) as e:
             logger.warning("Failed to load %s: %s", TOKEN_FILE, e)
     return {}
@@ -51,8 +47,6 @@ def _save(data: dict[str, Any]) -> None:
     tmp = TOKEN_FILE.with_suffix(TOKEN_FILE.suffix + ".tmp")
     tmp.write_text(json.dumps(data, indent=2))
     tmp.replace(TOKEN_FILE)
-    _cache.clear()
-    _cache.update(data)
 
 
 def init_token_file() -> None:
